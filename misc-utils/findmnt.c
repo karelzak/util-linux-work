@@ -91,7 +91,7 @@ enum {
 enum {
 	TABTYPE_FSTAB = 1,
 	TABTYPE_MTAB,
-	TABTYPE_KERNEL
+	TABTYPE_KERNEL_MOUNTINFO
 };
 
 /* column names */
@@ -1048,13 +1048,16 @@ static struct libmnt_table *parse_tabfiles(char **files,
 		case TABTYPE_MTAB:
 			rc = mnt_table_parse_mtab(tb, path);
 			break;
-		case TABTYPE_KERNEL:
+		case TABTYPE_KERNEL_MOUNTINFO:
 			if (!path)
 				path = access(_PATH_PROC_MOUNTINFO, R_OK) == 0 ?
 					      _PATH_PROC_MOUNTINFO :
 					      _PATH_PROC_MOUNTS;
 
 			rc = mnt_table_parse_file(tb, path);
+			break;
+		default:
+			rc = -EINVAL;
 			break;
 		}
 		if (rc) {
@@ -1705,7 +1708,7 @@ int main(int argc, char *argv[])
 		{ "help",	    no_argument,       NULL, 'h'		 },
 		{ "invert",	    no_argument,       NULL, 'i'		 },
 		{ "json",	    no_argument,       NULL, 'J'		 },
-		{ "kernel",	    no_argument,       NULL, 'k'		 },
+		{ "kernel",	    optional_argument, NULL, 'k'		 },
 		{ "list",	    no_argument,       NULL, 'l'		 },
 		{ "mountpoint",	    required_argument, NULL, 'M'		 },
 		{ "mtab",	    no_argument,       NULL, 'm'		 },
@@ -1765,7 +1768,7 @@ int main(int argc, char *argv[])
 	findmnt.flags |= FL_TREE;
 
 	while ((c = getopt_long(argc, argv,
-				"AabCcDd:ehIiJfF:o:O:p::PQ:klmM:nN:rst:uvRS:T:Uw:VxyH",
+				"AabCcDd:ehIiJfF:o:O:p::PQ:k::lmM:nN:rst:uvRS:T:Uw:VxyH",
 				longopts, NULL)) != -1) {
 
 		err_exclusive_options(c, longopts, excl, excl_st);
@@ -1861,8 +1864,14 @@ int main(int argc, char *argv[])
 			tabtype = TABTYPE_FSTAB;
 			findmnt.flags &= ~FL_TREE;
 			break;
-		case 'k':		/* kernel (mountinfo) */
-			tabtype = TABTYPE_KERNEL;
+		case 'k':
+			if (optarg) {
+				if (strcmp(optarg, "mountinfo") == 0)
+					tabtype = TABTYPE_KERNEL_MOUNTINFO;
+				else
+					errx(EXIT_FAILURE, _("invalid --kernel argument"));
+			} else
+				tabtype = TABTYPE_KERNEL_MOUNTINFO;
 			break;
 		case 't':
 			set_match(COL_FSTYPE, optarg);
@@ -1878,7 +1887,7 @@ int main(int argc, char *argv[])
 			findmnt.flags |= FL_NOHEADINGS;
 			break;
 		case 'N':
-			tabtype = TABTYPE_KERNEL;
+			tabtype = TABTYPE_KERNEL_MOUNTINFO;
 			tabfiles = append_pid_tabfile(tabfiles, &ntabfiles,
 					strtou32_or_err(optarg,
 						_("invalid TID argument")));
@@ -1979,7 +1988,7 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 
 	if (!tabtype)
-		tabtype = verify ? TABTYPE_FSTAB : TABTYPE_KERNEL;
+		tabtype = verify ? TABTYPE_FSTAB : TABTYPE_KERNEL_MOUNTINFO;
 
 	if ((findmnt.flags & FL_POLL) && ntabfiles > 1)
 		errx(EXIT_FAILURE, _("--poll accepts only one file, but more specified by --tab-file"));
@@ -2028,7 +2037,7 @@ int main(int argc, char *argv[])
 	mnt_table_set_userdata(tb, &findmnt);
 
 	if (tabtype == TABTYPE_MTAB && tab_is_kernel(tb))
-		tabtype = TABTYPE_KERNEL;
+		tabtype = TABTYPE_KERNEL_MOUNTINFO;
 
 	istree = tab_is_tree(tb);
 	if (istree && force_tree)
@@ -2045,7 +2054,7 @@ int main(int argc, char *argv[])
 		}
 		mnt_table_set_cache(tb, findmnt.cache);
 
-		if (tabtype != TABTYPE_KERNEL)
+		if (tabtype != TABTYPE_KERNEL_MOUNTINFO)
 			cache_set_targets(findmnt.cache);
 	}
 
@@ -2082,7 +2091,7 @@ int main(int argc, char *argv[])
 		rc = add_matching_lines(tb, table, direction, &findmnt);
 
 		if (rc != 0
-		    && tabtype == TABTYPE_KERNEL
+		    && tabtype == TABTYPE_KERNEL_MOUNTINFO
 		    && (findmnt.flags & FL_NOSWAPMATCH)
 		    && !(findmnt.flags & FL_STRICTTARGET)
 		    && get_match(COL_TARGET)) {
