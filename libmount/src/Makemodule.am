@@ -101,6 +101,7 @@ check_PROGRAMS += \
 if LINUX
 check_PROGRAMS += test_mount_context test_mount_context_mount
 check_PROGRAMS += test_mount_monitor
+check_PROGRAMS += test_mount_listmount test_mount_statmount
 endif
 
 libmount_tests_cflags  = -DTEST_PROGRAM $(libmount_la_CFLAGS)
@@ -183,6 +184,16 @@ test_mount_debug_SOURCES = libmount/src/init.c
 test_mount_debug_CFLAGS = $(libmount_tests_cflags)
 test_mount_debug_LDFLAGS = $(libmount_tests_ldflags)
 test_mount_debug_LDADD = $(libmount_tests_ldadd)
+
+test_mount_listmount_SOURCES = libmount/samples/listmount.c
+test_mount_listmount_CFLAGS = $(libmount_tests_cflags)
+test_mount_listmount_LDFLAGS = $(libmount_tests_ldflags)
+test_mount_listmount_LDADD = $(libmount_tests_ldadd)
+
+test_mount_statmount_SOURCES = libmount/samples/statmount.c
+test_mount_statmount_CFLAGS = $(libmount_tests_cflags)
+test_mount_statmount_LDFLAGS = $(libmount_tests_ldflags)
+test_mount_statmount_LDADD = $(libmount_tests_ldadd)
 
 if FUZZING_ENGINE
 check_PROGRAMS += test_mount_fuzz

@@ -34,7 +34,7 @@ struct libmnt_statmnt *mnt_new_statmnt(void)
 
 	errno = 0;
 	if (ul_statmount(0, 0, 0, NULL, 0, 0) < 0 && errno == ENOSYS) {
-		DBG(FS, ul_debug("statmount: unsuppported"));
+		DBG(FS, ul_debug("statmount: unsupported"));
 		return NULL;
 	}
 
