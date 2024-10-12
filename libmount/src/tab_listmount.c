@@ -97,9 +97,9 @@ static int table_init_listmount(struct libmnt_table *tb, size_t stepsiz)
 		errno = 0;
 		if (ul_listmount(LSMT_ROOT, 0, 0, &dummy, 1, LISTMOUNT_REVERSE) != 1) {
 			if (errno == ENOSYS)
-				DBG(TAB, ul_debugobj(tb, "listmount: unsuppported"));
+				DBG(TAB, ul_debugobj(tb, "listmount: unsupported"));
 			if (errno == EINVAL)
-				DBG(TAB, ul_debugobj(tb, "listmount: reverse unsuppported"));
+				DBG(TAB, ul_debugobj(tb, "listmount: reverse unsupported"));
 			return -ENOSYS;
 		}
 	}
