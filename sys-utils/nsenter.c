@@ -211,6 +211,17 @@ static void enable_namespace(int nstype, const char *path)
 	assert(nsfile->nstype);
 }
 
+static void disable_namespaces(int namespaces)
+{
+	struct namespace_file *n;
+
+	for (n = namespace_files; n->nstype; n++) {
+		if (!(namespaces & n->nstype))
+			continue;
+		disable_nsfile(n);
+	}
+}
+
 /* Returns mask of all enabled namespaces */
 static int get_namespaces(void)
 {
@@ -252,16 +263,24 @@ static void open_namespaces(int namespaces)
 	}
 }
 
-static void enter_namespaces(int namespaces, bool ignore_errors)
+static void enter_namespaces(int pid_fd, int namespaces, bool ignore_errors)
 {
 	struct namespace_file *n;
 
+	if (pid_fd) {
+		int ns = 0;
+		for (n = namespace_files; n->nstype; n++) {
+			if (n->enabled && (n->nstype & namespaces) && n->fd < 0)
+				ns |= n->nstype;
+		}
+		if (ns && setns(pid_fd, ns) == 0)
+			disable_namespaces(ns);
+		else if (!ignore_errors)
+			err(EXIT_FAILURE, _("reassociate to namespaces failed"));
+	}
+
 	for (n = namespace_files; n->nstype; n++) {
-		if (!n->enabled)
-			continue;
-		if (!(n->nstype & namespaces))
-			continue;
-		if (n->fd < 0)
+		if (!n->enabled || !(n->nstype & namespaces) || n->fd < 0)
 			continue;
 
 		if (setns(n->fd, n->nstype) == 0)
@@ -486,6 +505,7 @@ int main(int argc, char *argv[])
 	gid_t gid = 0;
 	int keepcaps = 0;
 	int sock_fd = -1;
+	int pid_fd = -1;
 	struct ul_env_list *envls;
 #ifdef HAVE_LIBSELINUX
 	bool selinux = 0;
@@ -633,7 +653,12 @@ int main(int argc, char *argv[])
 	if (namespaces) {
 		if (!namespace_target_pid)
 			errx(EXIT_FAILURE, _("no target PID specified"));
-		open_namespaces(namespaces);
+
+		pid_fd = pidfd_open(namespace_target_pid, 0);
+		if (pid_fd < 0) {
+			/* fallback to classic way */
+			open_namespaces(namespaces);
+		}
 	}
 
 	if (do_rd)
@@ -688,11 +713,14 @@ int main(int argc, char *argv[])
 	 * namespace last and if we're privileging it then we enter the user
 	 * namespace first (because the initial setns will fail).
 	 */
-	enter_namespaces(namespaces & ~CLONE_NEWUSER, 1);	/* ignore errors */
+	enter_namespaces(pid_fd, namespaces & ~CLONE_NEWUSER, 1);	/* ignore errors */
 
 	namespaces = get_namespaces();
 	if (namespaces)
-		enter_namespaces(namespaces, 0);		/* report errors */
+		enter_namespaces(pid_fd, namespaces, 0);		/* report errors */
+
+	if (pid_fd >= 0)
+		close(pid_fd);
 
 	/* Remember the current working directory if I'm not changing it */
 	if (root_fd >= 0 && wd_fd < 0 && wdns == NULL) {
