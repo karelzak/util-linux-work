@@ -82,6 +82,7 @@ enum {
 	COL_SOURCES,
 	COL_TARGET,
 	COL_TID,
+	COL_UNIQ_ID,
 	COL_USED,
 	COL_USEPERC,
 	COL_UUID,
@@ -134,6 +135,7 @@ static struct colinfo infos[] = {
 	[COL_SOURCE]       = { "SOURCE",       0.25, SCOLS_FL_NOEXTREMES, N_("source device") },
 	[COL_TARGET]       = { "TARGET",       0.30, SCOLS_FL_TREE| SCOLS_FL_NOEXTREMES, N_("mountpoint") },
 	[COL_TID]          = { "TID",             4, SCOLS_FL_RIGHT, N_("task ID") },
+	[COL_UNIQ_ID]      = { "UNIQ-ID",        10, SCOLS_FL_RIGHT, N_("mount 64-bit ID (requires --kernel=listmount)") },
 	[COL_USED]         = { "USED",            5, SCOLS_FL_RIGHT, N_("filesystem size used, use <number> if --bytes is given") },
 	[COL_USEPERC]      = { "USE%",            3, SCOLS_FL_RIGHT, N_("filesystem use percentage") },
 	[COL_UUID]         = { "UUID",           36, 0, N_("filesystem UUID") },
@@ -723,6 +725,10 @@ static char *get_data(struct libmnt_fs *fs, int num, size_t *datasiz, struct fin
 	case COL_ID:
 		if (mnt_fs_get_id(fs))
 			xasprintf(&str, "%d", mnt_fs_get_id(fs));
+		break;
+	case COL_UNIQ_ID:
+		if (mnt_fs_get_uniq_id(fs))
+			xasprintf(&str, "%" PRIu64, mnt_fs_get_uniq_id(fs));
 		break;
 	case COL_PARENT:
 		if (mnt_fs_get_parent_id(fs))
@@ -1470,6 +1476,7 @@ static int get_column_json_type(int id, int scols_flags, int *multi, unsigned in
 			break;
 		/* fallthrough */
 	case COL_ID:
+	case COL_UNIQ_ID:
 	case COL_PARENT:
 	case COL_FREQ:
 	case COL_PASSNO:
