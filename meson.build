@@ -60,6 +60,9 @@ if pc_version.length() < 3
     pc_version += '0'
 endif
 
+pc_major_version = pc_version[0]
+pc_minor_version = pc_version[1]
+pc_patch_version = pc_version[2]
 pc_version = '.'.join(pc_version)
 
 conf.set_quoted('LIBBLKID_VERSION', pc_version)

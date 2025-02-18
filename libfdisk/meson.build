@@ -2,9 +2,9 @@ dir_libfdisk = include_directories('.', 'src')
 
 defs = configuration_data()
 defs.set('LIBFDISK_VERSION', pc_version)
-defs.set('LIBFDISK_MAJOR_VERSION', pc_version.split('.')[0])
-defs.set('LIBFDISK_MINOR_VERSION', pc_version.split('.')[1])
-defs.set('LIBFDISK_PATCH_VERSION', pc_version.split('.')[2])
+defs.set('LIBFDISK_MAJOR_VERSION', pc_major_version)
+defs.set('LIBFDISK_MINOR_VERSION', pc_minor_version)
+defs.set('LIBFDISK_PATCH_VERSION', pc_patch_version)
 
 configure_file(
   input : 'src/libfdisk.h.in',
