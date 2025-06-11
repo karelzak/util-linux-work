@@ -82,8 +82,12 @@ static const struct monitor_opers kernel_opers = {
  * @mn: monitor
  * @enable: 0 or 1
  *
- * Enables or disables kernel VFS monitoring. If the monitor does not exist and
- * enable=1 then allocates new resources necessary for the monitor.
+ * Enables or disables classic kernel VFS monitoring. This monitor only informs
+ * that any change has been made to the kernel mount table, but does not return
+ * details on what was changed and how. See also mnt_monitor_enable_kernel2().
+ *
+ * If the monitor does not exist and enable=1 then allocates new resources
+ * necessary for the monitor.
  *
  * If the top-level monitor has been already created (by mnt_monitor_get_fd()
  * or mnt_monitor_wait()) then it's updated according to @enable.

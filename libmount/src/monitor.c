@@ -535,6 +535,11 @@ static struct libmnt_monitor *create_test_monitor(int argc, char *argv[])
 				warn("failed to initialize kernel monitor");
 				goto err;
 			}
+		} else if (strcmp(argv[i], "kernel2") == 0) {
+			if (mnt_monitor_enable_kernel2(mn, TRUE, -1)) {
+				warn("failed to initialize kernel2 monitor");
+				goto err;
+			}
 		} else if (strcmp(argv[i], "veil") == 0) {
 			mnt_monitor_veil_kernel(mn, 1);
 		}
@@ -658,7 +663,7 @@ static int test_wait(struct libmnt_test *ts __attribute__((unused)),
 int main(int argc, char *argv[])
 {
 	struct libmnt_test tss[] = {
-		{ "--epoll", test_epoll, "<userspace kernel veil ...>  monitor in epoll" },
+		{ "--epoll", test_epoll, "<userspace kernel kernel2 veil ...>  monitor in epoll" },
 		{ "--epoll-clean", test_epoll_cleanup, "<userspace kernel veil ...>  monitor in epoll and clean events" },
 		{ "--wait",  test_wait,  "<userspace kernel veil ...>  monitor wait function" },
 		{ NULL }
