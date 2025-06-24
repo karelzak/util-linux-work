@@ -468,13 +468,6 @@ static int is_loopdev_required(struct libmnt_context *cxt, struct libmnt_optlist
 		}
 	}
 
-	/* The EROFS kernel driver can be compiled with EROFS_FS_BACKED_BY_FILE,
-	 * allowing for the mounting of a regular file as a filesystem without
-	 * a loop device.
-	 */
-	if (type && strcmp(type, "erofs") == 0)
-		return 0;
-
 	/* Note that there is no restriction (on kernel side) that would
 	 * prevent a regular file as a mount(2) source argument. A filesystem
 	 * that is able to mount regular files could be implemented. For this
