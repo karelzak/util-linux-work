@@ -125,8 +125,8 @@ static int fanotify_process_event(
 	struct monitor_entrydata *data;
 	ssize_t len;
 
-	if (!mn || !me || me->fd < 0)
-		return 0;
+	if (!mn || !me || me->fd < 0 || !me->data)
+		return -EINVAL;
 
 	DBG(MONITOR, ul_debugobj(mn, "reading fanotify event"));
 
@@ -148,13 +148,73 @@ static int fanotify_process_event(
 	}
 
 	len = read(me->fd, data->buf, sizeof(data->buf));
-	if (len < 0)
+	if (len <= 0)
 		return 1;	/* nothing */
 
 	data->remaining = (size_t) len;
 	DBG(MONITOR, ul_debugobj(mn, " fanotify event [len=%zu]", data->remaining));
 
 	return 0;
+}
+
+/* Returns: <0 error; 0 success; 1 nothing */
+static int fanotify_next_fs(struct libmnt_monitor *mn, struct monitor_entry *me,
+			struct libmnt_fs *fs)
+{
+	struct monitor_entrydata *data;
+
+	struct fanotify_event_metadata *meta;
+	struct fanotify_event_info_mnt *mnt;
+
+	if (!mn || !me || me->fd < 0 || !me->data)
+		return -EINVAL;
+
+	DBG(MONITOR, ul_debugobj(mn, "next fanotify fs"));
+
+	data = (struct monitor_entrydata *) me->data;
+	if (!data->remaining)
+		return 1;
+
+	if (!fs) {
+		data->remaining = 0;
+		return 1;		/* ask for nothing; drain out only */
+	} else {
+		struct libmnt_statmnt *tmp = fs->stmnt;
+		fs->stmnt = NULL;
+		mnt_reset_fs(fs);
+		fs->stmnt = tmp;
+	}
+
+	meta = (struct fanotify_event_metadata *) data->buf;
+
+	while (FAN_EVENT_OK(meta, data->remaining)) {
+		if (meta->vers != FANOTIFY_METADATA_VERSION) {
+			DBG(MONITOR, ul_debugobj(mn, "fanotify version mismatch"));
+			continue;
+		}
+
+		mnt = (struct fanotify_event_info_mnt *)
+				(((char *) meta) + meta->event_len - sizeof(*meta));
+
+		DBG(MONITOR, ul_debugobj(mn, "fanotify fs id=%ju mask=0x%08llx (%s)\n",
+			(uintmax_t) mnt->mnt_id,
+			meta->mask,
+			meta->mask & (FAN_MNT_ATTACH | FAN_MNT_DETACH) ? "MOVE" :
+			meta->mask & FAN_MNT_ATTACH ? "ATTACH" :
+			meta->mask & FAN_MNT_DETACH ? "DETACH" : "???"));
+
+		mnt_fs_set_uniq_id(fs, mnt->mnt_id);
+
+		if (meta->mask & FAN_MNT_ATTACH)
+			fs->flags |= MNT_FS_STATUS_ATTACH;
+		if (meta->mask & FAN_MNT_DETACH)
+			fs->flags |= MNT_FS_STATUS_DETACH;
+
+		meta = FAN_EVENT_NEXT(meta, data->remaining);
+		return 0;
+	}
+
+	return 1;
 }
 
 /*

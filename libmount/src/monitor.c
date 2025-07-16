@@ -485,7 +485,7 @@ int mnt_monitor_event_cleanup(struct libmnt_monitor *mn)
  * <informalexample>
  *  <programlisting>
  *   while (mnt_monitor_next_change(mn, NULL, &type) == 0) {
- *     if (type == MNT_MONITOR_TYPE_FANOTIFY) {
+ *     if (type == MNT_MONITOR_TYPE_KERNEL2) {
  *       while (mnt_monitor_event_next_fs(mn, fs) == 0) {
  *         printf("ID=%ju\n", mnt_fs_get_uniq_id(fs));
  *       }
