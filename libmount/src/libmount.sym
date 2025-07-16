@@ -411,5 +411,8 @@ MOUNT_2_41 {
 
 MOUNT_2_42 {
 	mnt_monitor_event_next_fs;
+	mnt_fs_is_moved;
+	mnt_fs_is_attached;
+	mnt_fs_is_detached;
 } MOUNT_2_41;
 

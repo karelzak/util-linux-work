@@ -707,6 +707,50 @@ int mnt_fs_is_kernel(struct libmnt_fs *fs)
 }
 
 /**
+ * mnt_fs_is_moved:
+ * @fs: filesystem
+ *
+ * The move/attach/detach status depends on how @fs has been used by the library.  
+ * The status is not set when working with fstab, etc.
+ *
+ * Note that after mounting, the @fs is reported as detached and attached at the same time.
+ *
+ * Returns: 1 if the filesystem has been moved.
+ */
+int mnt_fs_is_moved(struct libmnt_fs *fs)
+{
+	return mnt_fs_get_flags(fs) & MNT_FS_STATUS_MOVE ? 1 : 0;
+}
+
+/**
+ * mnt_fs_is_attached:
+ * @fs: filesystem
+ *
+ * The move/attach/detach status depends on how @fs has been used by the library.  
+ * The status is not set when working with fstab, etc.
+ *
+ * Returns: 1 if the filesystem has been attached.
+ */
+int mnt_fs_is_attached(struct libmnt_fs *fs)
+{
+	return mnt_fs_get_flags(fs) & MNT_FS_STATUS_ATTACH ? 1 : 0;
+}
+
+/**
+ * mnt_fs_is_detached:
+ * @fs: filesystem
+ *
+ * The move/attach/detach status depends on how @fs has been used by the library.  
+ * The status is not set when working with fstab, etc.
+ *
+ * Returns: 1 if the filesystem has been dettached.
+ */
+int mnt_fs_is_detached(struct libmnt_fs *fs)
+{
+	return mnt_fs_get_flags(fs) & MNT_FS_STATUS_DETACH ? 1 : 0;
+}
+
+/**
  * mnt_fs_is_swaparea:
  * @fs: filesystem
  *
