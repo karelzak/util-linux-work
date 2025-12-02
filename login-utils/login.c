@@ -682,7 +682,7 @@ static void log_lastlog(struct login_context *cxt)
 	sa.sa_handler = SIG_IGN;
 	sigaction(SIGXFSZ, &sa, &oldsa_xfsz);
 
-	fd = open(_PATH_LASTLOG, O_RDWR, 0);
+	fd = open(_PATH_LASTLOG, O_RDWR | O_CREAT, 0);
 	if (fd < 0)
 		goto done;
 	offset = cxt->pwd->pw_uid * sizeof(ll);
