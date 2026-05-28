@@ -20,6 +20,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
+#include "vmcp.h"
 
 int isinteger(const char *str)
 {
